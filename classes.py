@@ -1,6 +1,8 @@
 import os
 import pandas as pd
 import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
 # from Ipython.display import display, HTML
 from IPython.display import display, HTML
 
@@ -77,3 +79,78 @@ class DataInfo:
         #Display the dataset
         print('=='*20 + f'\nDataset Overview\n'+ '=='*20 )
         return display(HTML(df.head().to_html()))
+    
+class EDA:
+    """Class to Perform various checks on the dataset"""
+    def __init__(self, df):
+        self.df =df
+        self.categorical_columns = [] 
+        self.numerical_columns =[]
+        self._identify_columns()
+
+    def _identify_columns(self):
+        """
+        Identify numerical and categorical columns.
+        """
+        for col in self.df.columns:
+            if self.df[col].dtype == object:
+                self.categorical_columns.append(col)
+            else:
+                self.numerical_columns.append(col)
+
+    
+
+    def check_outliers_and_plot(self):
+        """
+        Detect outliers in numerical columns using the IQR method and plot boxplots.
+        """
+        
+
+        outlier_columns = []
+
+        for column in self.numerical_columns:
+            Q1 = self.df[column].quantile(0.25)
+            Q3 = self.df[column].quantile(0.75)
+            IQR = Q3 - Q1
+            lower_bound = Q1 - 1.5 * IQR
+            upper_bound = Q3 + 1.5 * IQR
+
+            # Find outliers
+            outlier_indices = self.df[(self.df[column] < lower_bound) | (self.df[column] > upper_bound)].index.tolist()
+
+            if outlier_indices: 
+                outlier_columns.append(column)
+
+        print("***********************************************")
+        print("Columns Containing Outliers Include:", outlier_columns)
+        print("***********************************************")
+
+        if outlier_columns:
+            # Plot boxplots for columns with outliers
+            num_rows = (len(outlier_columns) + 2) // 2
+            num_cols = min(len(outlier_columns), 2)
+            fig, axes = plt.subplots(nrows=num_rows, ncols=num_cols, figsize=(20, 20))
+
+            # Ensure axes is always iterable
+            if len(outlier_columns) == 1:
+                axes = [axes]  # Make axes a list to allow consistent indexing
+            else:
+                axes = axes.flatten() if num_rows > 1 else axes
+
+            for i, column in enumerate(outlier_columns):
+                sns.boxplot(x=self.df[column], ax=axes[i])
+                axes[i].set_xlabel(column)
+                axes[i].set_ylabel('Values')
+                axes[i].set_title(f'{column}')
+                axes[i].tick_params(axis='x', rotation=45)
+
+            # Remove any unused subplots
+            if len(outlier_columns) < len(axes):
+                for j in range(len(outlier_columns), len(axes)):
+                    fig.delaxes(axes[j])
+
+            # Adjust layout to prevent overlapping
+            plt.tight_layout()
+            plt.show()
+        else:
+            print("NO OUTLIERS FOUND")
