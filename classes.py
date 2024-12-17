@@ -40,7 +40,7 @@ class DataInfo:
         """
         Displaying Relevant Information on the the Dataset Provided
         """    
-        # Counting no of rows 
+        # Counting no of rows and columns
         print('=='*20 + f'\nShape of the dataset : {df.shape} \n' + '=='*20 + '\n')
         
         # Extracting column names
